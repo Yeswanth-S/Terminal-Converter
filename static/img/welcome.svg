@@ -1,0 +1,75 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1200 160" width="100%" height="auto">
+  <defs>
+    <!-- Gradient for text -->
+    <linearGradient id="asciiGradient" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#7a7fcd" />
+      <stop offset="100%" stop-color="#a079d4" />
+    </linearGradient>
+  </defs>
+
+  <style>
+    .ascii {
+      font-family: monospace;
+      font-size: 14px;
+      white-space: pre;
+      opacity: 0; /* Set initial opacity to 0 for fade-in effect */
+      fill: url(#asciiGradient); /* Apply gradient */
+    }
+
+    /* Fade-in for each line with a slight delay */
+    .ascii-line {
+      opacity: 0;
+      animation: fadeIn 1s ease-in-out forwards;
+    }
+
+    /* Sequential fade-in with a delay for each line */
+    .line1 {
+      animation-delay: 0.25s;
+    }
+    .line2 {
+      animation-delay: 0.5s;
+    }
+    .line3 {
+      animation-delay: 0.75s;
+    }
+    .line4 {
+      animation-delay: 1s;
+    }
+    .line5 {
+      animation-delay: 1.25s;
+    }
+    .line6 {
+      animation-delay: 1.5s;
+    }
+
+    @keyframes fadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+  </style>
+
+  <!-- ASCII Art with fade-in for each line -->
+  <text class="ascii ascii-line line1" x="-40" y="40" dominant-baseline="text-before-edge">
+     ███████╗███████╗██████╗ ███╗   ███╗██╗███╗   ██╗ █████╗ ██╗          ██████╗ ██████╗ ███╗   ██╗██╗   ██╗███████╗██████╗ ████████╗███████╗██████╗
+  </text>
+  <text class="ascii ascii-line line2" x="-40" y="60" dominant-baseline="text-before-edge">
+    ╚══██╔══╝██╔════╝██╔══██╗████╗ ████║██║████╗  ██║██╔══██╗██║         ██╔════╝██╔═══██╗████╗  ██║██║   ██║██╔════╝██╔══██╗╚══██╔══╝██╔════╝██╔══██╗
+  </text>
+  <text class="ascii ascii-line line3" x="-40" y="80" dominant-baseline="text-before-edge">
+       ██║   █████╗  ██████╔╝██╔████╔██║██║██╔██╗ ██║███████║██║         ██║     ██║   ██║██╔██╗ ██║██║   ██║█████╗  ██████╔╝   ██║   █████╗  ██████╔╝
+  </text>
+  <text class="ascii ascii-line line4" x="-40" y="100" dominant-baseline="text-before-edge">
+       ██║   ██╔══╝  ██╔══██╗██║╚██╔╝██║██║██║╚██╗██║██╔══██║██║         ██║     ██║   ██║██║╚██╗██║╚██╗ ██╔╝██╔══╝  ██╔══██╗   ██║   ██╔══╝  ██╔══██╗
+  </text>
+  <text class="ascii ascii-line line5" x="-40" y="120" dominant-baseline="text-before-edge">
+       ██║   ███████╗██║  ██║██║ ╚═╝ ██║██║██║ ╚████║██║  ██║███████╗    ╚██████╗╚██████╔╝██║ ╚████║ ╚████╔╝ ███████╗██║  ██║   ██║   ███████╗██║  ██║
+  </text>
+  <text class="ascii ascii-line line6" x="-40" y="140" dominant-baseline="text-before-edge">
+       ╚═╝   ╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚═╝╚═╝  ╚═══╝╚═╝  ╚═╝╚══════╝     ╚═════╝ ╚═════╝ ╚═╝  ╚═══╝  ╚═══╝  ╚══════╝╚═╝  ╚═╝   ╚═╝   ╚══════╝╚═╝  ╚═╝
+  </text>
+
+</svg>

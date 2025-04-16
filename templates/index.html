@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Terminal Converter</title>
+  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+  
+</head>
+<body>
+
+  <div class="terminal-container" id="terminal">
+
+    <div class="header">
+      <button id="light-mode" title="Light Mode"></button>
+      <button id="dark-mode" title="Dark Mode"></button>
+      <button id="cancel" title="Cancel"></button>
+    </div>
+
+    <div class="svg-container">
+      <object id="svg-object" data="{{ url_for('static', filename='img/welcome.svg') }}" type="image/svg+xml" class="welcome-svg"></object>
+    </div>
+
+    <div id="output"></div> 
+
+    <input 
+      type="file" 
+      id="file-input" 
+      accept=".png,.jpg,.jpeg,.webp,.svg,.bmp,.tiff,.gif,.mp4,.mkv,.mov,.avi,.flv,.wmv,.webm,.mp3,.wav,.flac,.aac,.m4a,.ogg,.opus,.wma"  
+      style="display: none" 
+    />
+  </div>
+
+  <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>

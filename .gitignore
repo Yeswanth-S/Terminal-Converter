@@ -1,0 +1,38 @@
+# Byte-compiled / optimized / DLL files
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Flask / Python
+instance/
+.env
+*.env
+
+# OS-specific
+.DS_Store
+Thumbs.db
+
+# Virtual environments
+venv/
+env/
+ENV/
+.venv/
+
+# IDEs and editors
+.vscode/
+.idea/
+
+# Python test cache
+.pytest_cache/
+
+# Uploads and converted files
+uploads/
+converted/
+
+# Logs
+*.log
+
+# Render / Deployment
+*.sqlite3
+*.bak
+*.swp
