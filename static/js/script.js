@@ -179,10 +179,13 @@ function handleFile(file) {
     available = ext === "svg"
       ? ["png", "pdf", "ps"]
       : imageFormats.filter(f => f !== ext && f !== "svg");
-
-    setTimeout(() => showFormatOptions(available, ext), (0.6 * lines.length + 0.3) * 1000);
+  
+    setTimeout(() => {
+      showFormatOptions(available, ext);
+      setTimeout(() => autoScrollToBottom(), 100);
+    }, (0.6 * lines.length + 0.3) * 1000);
   }
-
+  
   else if (type === "Video") {
     const totalDelay = 0.6 * lines.length + 0.3;
 
@@ -205,12 +208,13 @@ function handleFile(file) {
         option.onclick = () => {
           [...toggleContainer.children].forEach(c => c.classList.remove("active-toggle"));
           option.classList.add("active-toggle");
-
+        
           const existing = document.querySelector(".file-options.formats");
           if (existing) existing.remove();
-
+        
           callback();
-        };
+          setTimeout(() => autoScrollToBottom(), 100);
+        };        
 
         return option;
       };
@@ -224,12 +228,16 @@ function handleFile(file) {
       }));
 
       output.appendChild(toggleContainer);
+      autoScrollToBottom();
     }, totalDelay * 1000);
   }
 
   else if (type === "Audio") {
     available = audioFormats.filter(f => f !== ext);
-    setTimeout(() => showFormatOptions(available, ext), (0.6 * lines.length + 0.3) * 1000);
+    setTimeout(() => {
+      showFormatOptions(available, ext);
+      setTimeout(() => autoScrollToBottom(), 100);
+    }, (0.6 * lines.length + 0.3) * 1000);
   }
 }
 

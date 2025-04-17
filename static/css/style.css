@@ -13,7 +13,7 @@ body {
   
   :root {
     /* Mocha Palette (Dark Theme) */
-    --mocha-base: #11111b;
+    --mocha-base:#11111b;
     --mocha-text: #cdd6f4;
     --mocha-lavender: #b4befe;
     --mocha-green: #a6e3a1;
@@ -402,7 +402,6 @@ body {
       height: 100px;
     }
   
-    /* Hide the SVG for mobile */
     .welcome-svg {
       display: none;
     }
@@ -421,3 +420,87 @@ body {
       height: 14px;
     }
   }
+  
+  @media (min-width: 2560px) {
+    body {
+      font-size: 1.2rem;
+    }
+  
+    .terminal-container {
+      max-width: 1750px;
+      padding: 30px 40px;
+      scale: 1.3;
+    }
+  
+    .welcome-svg {
+      width: 70%;
+      max-width: 700px;
+    }
+  
+    .header button {
+      width: 25px;
+      height: 25px;
+    }
+  
+    .file-options .dot,
+    .dot {
+      display: inline-block;
+      width: 15px;
+      height: 15px;
+    }
+  
+    .file-options span {
+      font-size: 1.1em;
+    }
+  
+    .typed-line, .typed-initial-line {
+      font-size: 1.1em;
+    }
+  
+    .download-btn-terminal {
+      font-size: 1.1rem;
+      padding: 8px 16px;
+    }
+  }
+  
+  @media (min-width: 3840px) {
+    body {
+      font-size: 1.5rem;
+    }
+  
+    .terminal-container {
+      max-width: 2500px;
+      padding: 40px 50px;
+    }
+  
+    .welcome-svg {
+      width: 75%;
+      max-width: 800px;
+    }
+  
+    .header button {
+      width: 30px;
+      height: 30px;
+    }
+  
+    .file-options .dot,
+    .dot {
+      display: inline-block;
+      width: 18px;
+      height: 18px;
+    }
+  
+    .file-options span {
+      font-size: 1.2em;
+    }
+  
+    .typed-line, .typed-initial-line {
+      font-size: 1.2em;
+    }
+  
+    .download-btn-terminal {
+      font-size: 1.2rem;
+      padding: 10px 20px;
+    }
+  }
+  
