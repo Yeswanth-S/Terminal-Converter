@@ -1,11 +1,10 @@
 <div style="text-align: center;">
-  <p align="center">
-    <img src="static/img/welcome.png" alt="Terminal Converter Logo" width="500"/>
-  </p>
+  <h1 align="center"> <img src="assets/Logo.png" alt="Terminal Converter Preview" width="100"/><br><b>Terminal Converter</b></h1>
+</div>
 
 <div style="text-align: center;">
   <p align="center">
-    <img src="assets/terminal.gif" alt="Terminal Converter Logo" width="500"/>
+    <img src="assets/terminal.gif" alt="Terminal Converter Preview" width="900"/>
   </p>
   <p align="center">
     <strong>A sleek terminal-style multimedia file converter</strong><br>
@@ -27,15 +26,14 @@
 - Custom codec flags like `h264` and `h265` are supported  
 - Terminal-style interface with real-time feedback  
 
----
 
 ## 🚀 Getting Started
 
 ### 1. Clone the Repository
 
 ```bash
-git clone https://github.com/YESWANTH-S/Terminal_Converter.git
-cd Multimedia-File-Converter
+git clone https://github.com/YESWANTH-S/Terminal-Converter.git
+cd Terminal-Converter
 ```
 
 ### 2. Install Dependencies
@@ -60,7 +58,6 @@ python app.py
 
 Visit `http://127.0.0.1:5000` in your browser.
 
----
 
 ## 📁 Project Structure
 
@@ -85,8 +82,6 @@ Visit `http://127.0.0.1:5000` in your browser.
 │   └── index.html
 ```
 
----
-
 ## 📦 Dependencies
 
 - Flask  
@@ -99,27 +94,24 @@ Install Python dependencies via:
 pip install -r requirements.txt
 ```
 
----
-
 ## 🧰 Tech Stack
 
 - **Backend**: Python (Flask)
 - **Frontend**: HTML, CSS, JavaScript
 - **Conversion Engine**: FFmpeg, CairoSVG
 
----
 
 ## 🔗 Demo
 
 - **Demo Video**: [Terminal Converter](assets/demo.mp4)
 
 https://github.com/user-attachments/assets/5394f407-a957-448c-a6fc-524e9465550e
----
 
-## 🪪 License
+## 🎨 Credits
+
+<p> <a href="https://github.com/tharunartz"> <img src="https://img.shields.io/badge/Logo%20By-@tharunartz-b4befe?style=for-the-badge&logo=github" alt="Logo by tharunartz"/> </a> </p>
+<p>Thanks for the logo</p>
+
+## 📄 License
 
 This project is licensed under the [MIT License](LICENSE).
-
----
-
-Contributions are welcome! If you have suggestions or improvements, feel free to open an issue or a pull request.
