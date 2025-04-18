@@ -176,16 +176,28 @@ function handleFile(file) {
   let available = [];
 
   if (type === "Image") {
-    available = ext === "svg"
-      ? ["png", "pdf", "ps"]
-      : imageFormats.filter(f => f !== ext && f !== "svg");
-  
-    setTimeout(() => {
-      showFormatOptions(available, ext);
-      setTimeout(() => autoScrollToBottom(), 100);
-    }, (0.6 * lines.length + 0.3) * 1000);
-  }
-  
+    if (ext === "gif") {
+      available = ["mp4", "mkv", "mov", "avi", "flv", "wmv", "webm",...imageFormats.filter(f => f !== "gif")];
+      setTimeout(() => {
+        showFormatOptions(available, ext);
+        setTimeout(() => autoScrollToBottom(), 100);
+      }, (0.6 * lines.length + 0.3) * 1000);
+    } 
+    else if (ext === "svg") {
+      available = ["png", "pdf", "ps", ...imageFormats.filter(f => f !== "svg")];
+      setTimeout(() => {
+        showFormatOptions(available, ext);
+        setTimeout(() => autoScrollToBottom(), 100);
+      }, (0.6 * lines.length + 0.3) * 1000);
+    } 
+    else {
+      available = imageFormats.filter(f => f !== ext && f !== "svg");
+      setTimeout(() => {
+        showFormatOptions(available, ext);
+        setTimeout(() => autoScrollToBottom(), 100);
+      }, (0.6 * lines.length + 0.3) * 1000);
+    }
+  } 
   else if (type === "Video") {
     const totalDelay = 0.6 * lines.length + 0.3;
 
@@ -230,8 +242,7 @@ function handleFile(file) {
       output.appendChild(toggleContainer);
       autoScrollToBottom();
     }, totalDelay * 1000);
-  }
-
+  } 
   else if (type === "Audio") {
     available = audioFormats.filter(f => f !== ext);
     setTimeout(() => {
