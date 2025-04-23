@@ -177,78 +177,103 @@ function handleFile(file) {
 
   if (type === "Image") {
     if (ext === "gif") {
-      available = ["mp4", "mkv", "mov", "avi", "flv", "wmv", "webm",...imageFormats.filter(f => f !== "gif")];
+      const totalDelay = 0.6 * lines.length + 0.3;
+  
       setTimeout(() => {
-        showFormatOptions(available, ext);
-        setTimeout(() => autoScrollToBottom(), 100);
-      }, (0.6 * lines.length + 0.3) * 1000);
-    } 
-    else if (ext === "svg") {
-      available = ["png", "pdf", "ps", ...imageFormats.filter(f => f !== "svg")];
-      setTimeout(() => {
-        showFormatOptions(available, ext);
-        setTimeout(() => autoScrollToBottom(), 100);
-      }, (0.6 * lines.length + 0.3) * 1000);
-    } 
-    else {
+        const toggleContainer = document.createElement("div");
+        toggleContainer.className = "file-options toggle-container";
+  
+        const createToggle = (label, callback) => {
+          const option = document.createElement("span");
+          option.classList.add("toggle-option");
+  
+          const dot = document.createElement("div");
+          dot.className = `dot ${label.toLowerCase()}`;
+  
+          const text = document.createElement("span");
+          text.textContent = label;
+  
+          option.appendChild(dot);
+          option.appendChild(text);
+          option.onclick = () => {
+            [...toggleContainer.children].forEach(c => c.classList.remove("active-toggle"));
+            option.classList.add("active-toggle");
+  
+            const existing = document.querySelector(".file-options.formats");
+            if (existing) existing.remove();
+  
+            callback();
+            setTimeout(() => autoScrollToBottom(), 100);
+          };
+  
+          return option;
+        };
+  
+        toggleContainer.appendChild(createToggle("Video", () => {
+          showFormatOptions(videoFormats.filter(f => f !== ext && f !== "h265"), ext);
+        }));
+  
+        toggleContainer.appendChild(createToggle("Image", () => {
+          showFormatOptions(imageFormats.filter(f => f !== "gif" && f !== "svg"), ext);
+        }));
+  
+        output.appendChild(toggleContainer);
+        autoScrollToBottom();
+      }, totalDelay * 1000);
+    } else if (ext === "svg") {
+      available = ["png", "pdf", "ps"];
+      setTimeout(() => showFormatOptions(available, ext), 0.6 * lines.length * 1000);
+    } else {
       available = imageFormats.filter(f => f !== ext && f !== "svg");
-      setTimeout(() => {
-        showFormatOptions(available, ext);
-        setTimeout(() => autoScrollToBottom(), 100);
-      }, (0.6 * lines.length + 0.3) * 1000);
+      setTimeout(() => showFormatOptions(available, ext), 0.6 * lines.length * 1000);         
     }
-  } 
-  else if (type === "Video") {
-    const totalDelay = 0.6 * lines.length + 0.3;
-
+  } else if (type === "Video") {
+    const totalDelay = (0.6 * lines.length + 0.3) * 1000;
+  
     setTimeout(() => {
       const toggleContainer = document.createElement("div");
       toggleContainer.className = "file-options toggle-container";
-
+  
       const createToggle = (label, callback) => {
         const option = document.createElement("span");
         option.classList.add("toggle-option");
-
+  
         const dot = document.createElement("div");
         dot.className = `dot ${label.toLowerCase()}`;
-
+  
         const text = document.createElement("span");
         text.textContent = label;
-
+  
         option.appendChild(dot);
         option.appendChild(text);
         option.onclick = () => {
           [...toggleContainer.children].forEach(c => c.classList.remove("active-toggle"));
           option.classList.add("active-toggle");
-        
+  
           const existing = document.querySelector(".file-options.formats");
           if (existing) existing.remove();
-        
+  
           callback();
           setTimeout(() => autoScrollToBottom(), 100);
-        };        
-
+        };
+  
         return option;
       };
-
+  
       toggleContainer.appendChild(createToggle("Video", () => {
         showFormatOptions(videoFormats.filter(f => f !== ext), ext);
       }));
-
+  
       toggleContainer.appendChild(createToggle("Audio", () => {
         showFormatOptions(audioFormats, ext);
       }));
-
+  
       output.appendChild(toggleContainer);
       autoScrollToBottom();
-    }, totalDelay * 1000);
-  } 
-  else if (type === "Audio") {
+    }, totalDelay);
+  } else if (type === "Audio") {
     available = audioFormats.filter(f => f !== ext);
-    setTimeout(() => {
-      showFormatOptions(available, ext);
-      setTimeout(() => autoScrollToBottom(), 100);
-    }, (0.6 * lines.length + 0.3) * 1000);
+    setTimeout(() => showFormatOptions(available, ext), 0.6 * lines.length * 1000);
   }
 }
 
@@ -259,6 +284,10 @@ function startConversion(originalExt, targetFormat) {
 
   if (["264", "h264", "265", "h265", "hevc"].includes(targetFormat.toLowerCase())) {
     clarificationLines.push(`Note: Output will be saved as .mp4 using ${targetFormat.includes("5") ? "libx265" : "libx264"} codec.`);
+  }
+
+  if (originalExt === "gif" && imageFormats.includes(targetFormat)) {
+    clarificationLines.push(`Note: The individual frames of the GIF will be zipped together into a single zip consiting of .${targetFormat} files.`);
   }
 
   appendPromptBlock(clarificationLines);
