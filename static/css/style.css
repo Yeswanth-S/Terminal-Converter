@@ -298,6 +298,7 @@ body {
   
   .dot.video   { background-color: var(--blue); }
   .dot.audio   { background-color: var(--green); }
+  .dot.image   { background-color: var(--yellow); }
   
   /* Progress & Extra UI Elements */
   
