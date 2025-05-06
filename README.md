@@ -1,30 +1,37 @@
-<div style="text-align: center;">
-  <h1 align="center"> <img src="assets/Logo.png" alt="Terminal Converter Preview" width="100"/><br><b>Terminal Converter</b></h1>
-</div>
+<p align="center">
+  <img src="assets/Logo.png" alt="Terminal Converter Logo" width="100"/>
+</p>
 
-<div style="text-align: center;">
-  <p align="center">
-    <img src="assets/terminal.gif" alt="Terminal Converter Preview" width="900"/>
-  </p>
-  <p align="center">
-    <strong>A sleek terminal-style multimedia file converter</strong><br>
-    Convert videos, audio, and images into various formats with real-time terminal feedback — all in your browser.
-  </p>
+<h1 align="center">Terminal Converter</h1>
 
-  <p align="center">
-    <a href="https://terminal-converter.onrender.com/" target="_blank">
-      <img src="https://img.shields.io/badge/Visit%20Website-Terminal%20Converter-b4befe?style=for-the-badge">
-    </a>
-  </p>
-</div>
+<p align="center">
+  <img src="assets/terminal.gif" alt="Terminal Converter Preview" width="900"/>
+</p>
+
+<p align="center"><strong>A sleek terminal-style multimedia file converter</strong></p>
+<p align="center">
+  Convert videos, audio, and images into various formats with real-time terminal feedback — all in your browser.
+</p>
+
+<p align="center">
+  <a href="https://terminal-converter.onrender.com/" target="_blank">
+    <img src="https://img.shields.io/badge/Visit%20Website-Terminal%20Converter-b4befe?style=for-the-badge" alt="Visit Terminal Converter Website"/>
+  </a>
+</p>
 
 ---
 
 ## ✨ Features
 
-- Convert video, audio, and image files to different formats  
-- Custom codec flags like `h264` and `h265` are supported  
-- Terminal-style interface with real-time feedback  
+- Convert video, audio, and image files to various formats  
+- Terminal-style interface with real-time conversion feedback  
+- Smart format detection and dynamic UI options based on file type  
+- Custom codec support with flags like `h264` and `h265`  
+- Convert videos to audio or image formats with proper handling  
+- SVG to PNG, PS, or PDF conversion with CairoSVG integration  
+- Web-based and lightweight.
+- Handles multiple conversions without page reloads 
+- Beautifully themed with Catppuccin for a modern, cozy vibe
 
 
 ## 🚀 Getting Started
@@ -81,6 +88,15 @@ Visit `http://127.0.0.1:5000` in your browser.
 ├── templates/
 │   └── index.html
 ```
+### 🔄 Supported Formats & Conversion Types
+
+| Category| Supported Formats | Conversion Types|
+|--|----|---|
+| 🎥 **Video**        | `mp4`, `mkv`, `mov`, `avi`, `flv`, `wmv`, `webm`, `gif`  | - To video: `mp4`, `mkv`, `mov`, `avi`, `flv`, `wmv`, `webm`, `gif`<br>- To audio: `mp3`, `wav`, `flac`, `aac`, `ogg`, `opus`, `wma`<br>- GIFs can be converted to video formats<br>- Supports `h264` and `h265` codecs too. |
+| 🎧 **Audio**        | `mp3`, `wav`, `flac`, `aac`, `ogg`, `opus`, `wma` | - To audio: `mp3`, `wav`, `flac`, `aac`, `ogg`, `opus`, `wma`                                                                                                         |
+| 🖼️ **Image**        | `jpeg`, `jpg`, `png`, `webp`, `svg`, `bmp`, `tiff`, `gif`| - To image: `jpeg`, `jpg`, `png`, `webp`, `bmp`, `tiff`, `gif`<br>- `svg` to: `png`, `ps`, `pdf`<br>- Animated `gif` can be extracted into image sequences *(zipped output)* |
+
+
 
 ## 📦 Dependencies
 
