@@ -1,2 +1,5 @@
-flask
-cairosvg
+Flask==3.1.0
+Pillow==11.1.0
+pillow-avif-plugin==1.4.6
+pillow-heif==0.21.0
+resvg==0.2.0
