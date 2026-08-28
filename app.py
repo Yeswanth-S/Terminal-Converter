@@ -1,139 +1,245 @@
-# Imports
+from __future__ import annotations
+import logging
 import os
-import re
-import uuid
-import io
-import subprocess
-import zipfile
-from flask import Flask, render_template, request, send_from_directory, jsonify
-import cairosvg
+from pathlib import Path
 
-# Init
-UPLOAD_FOLDER = 'uploads'
-CONVERTED_FOLDER = 'converted'
+from flask import Flask, request, jsonify, send_file, render_template, abort
+
+from converter.registry import (
+    FileKind, classify_content, targets_for, groups_for, allowed_extensions,
+    MAX_UPLOAD_BYTES, MAX_FILES_PER_JOB, TARGETS, TARGET_GROUPS,
+)
+from converter import jobs
+import config as app_config
+
+logging.basicConfig(level=logging.INFO, format="%(name)s: %(message)s")
+log = logging.getLogger("terminal-converter")
+
+BASE_DIR = Path(__file__).resolve().parent
+
+# Deployment mode (e.g., 'local' or 'render'). Frontend reads this via /api/formats.
+APP_MODE = os.environ.get("TC_MODE", "local")
+
+CONFIG = app_config.load_config()
 
 app = Flask(__name__)
-app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
-app.config['CONVERTED_FOLDER'] = CONVERTED_FOLDER
+app.config["MAX_CONTENT_LENGTH"] = MAX_UPLOAD_BYTES * MAX_FILES_PER_JOB
 
-os.makedirs(UPLOAD_FOLDER, exist_ok=True)
-os.makedirs(CONVERTED_FOLDER, exist_ok=True)
+# Preserve registry's exact TARGET_GROUPS ordering instead of alphabetizing.
+app.json.sort_keys = False
 
-@app.route('/')
-def index():
-    return render_template('index.html')
+# Warn and exclude storage_dir from Flask's reloader if it's inside the project
+# to prevent file writes from triggering an infinite server restart loop.
+_storage_dir_override = CONFIG.get("storage_dir")
+_resolved_storage_dir = Path(_storage_dir_override).expanduser().resolve() if _storage_dir_override else None
+_reloader_exclude: list[str] = []
 
-@app.route('/convert', methods=['POST'])
-def convert_file():
-    file = request.files['file']
-    target_format = request.form['target'].lower()
-
-    if not file or not target_format:
-        return {'error': 'Missing file or target format'}, 400
-
-    # Save input file
-    original_ext = file.filename.rsplit('.', 1)[-1].lower()
-    original_name = os.path.splitext(file.filename)[0]
-    safe_name = re.sub(r"[^\w\-_.]", "_", original_name)
-    input_filename = f"{uuid.uuid4().hex}.{original_ext}"
-    input_path = os.path.join(app.config['UPLOAD_FOLDER'], input_filename)
-    file.save(input_path)
-
-    # Prepare output filename and path
-    output_ext = target_format
-    output_filename = f"{safe_name}.{output_ext}"
-    output_path = os.path.join(app.config['CONVERTED_FOLDER'], output_filename)
-
-    # Handle SVG with CairoSVG
-    if original_ext == 'svg':
-        try:
-            if target_format == 'png':
-                cairosvg.svg2png(url=input_path, write_to=output_path)
-            elif target_format == 'pdf':
-                cairosvg.svg2pdf(url=input_path, write_to=output_path)
-            elif target_format == 'ps':
-                cairosvg.svg2ps(url=input_path, write_to=output_path)
-            else:
-                return {'error': f"Unsupported SVG conversion to .{target_format}"}, 400
-        except Exception as e:
-            return {'error': str(e)}, 500
-
-        return {'download_url': f"/download/{output_filename}"}
-
-    # Handle GIF to all frames and zip them
-    if original_ext == 'gif' and target_format in ['jpeg', 'jpg', 'png', 'webp', 'bmp', 'tiff']:
-        temp_frames_dir = os.path.join(app.config['CONVERTED_FOLDER'], f"frames_{uuid.uuid4().hex}")
-        os.makedirs(temp_frames_dir, exist_ok=True)
-
-        try:
-            ffmpeg_args = ['-i', input_path, os.path.join(temp_frames_dir, '%04d.' + target_format)]
-            subprocess.run(['ffmpeg'] + ffmpeg_args, check=True)
-
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                for frame_filename in sorted(os.listdir(temp_frames_dir)):
-                    frame_path = os.path.join(temp_frames_dir, frame_filename)
-                    zipf.write(frame_path, arcname=frame_filename)
-
-            zip_buffer.seek(0)
-
-            zip_filename = f"{safe_name}_frames.zip"
-            zip_path = os.path.join(app.config['CONVERTED_FOLDER'], zip_filename)
-            with open(zip_path, 'wb') as f:
-                f.write(zip_buffer.read())
-
-            return {'download_url': f"/download/{zip_filename}"}
-
-        except subprocess.CalledProcessError:
-            return {'error': 'Failed to extract frames from GIF using FFmpeg.'}, 500
-        except Exception as e:
-            return {'error': f"An error occurred: {str(e)}"}, 500
-        finally:
-            for frame_filename in os.listdir(temp_frames_dir):
-                os.remove(os.path.join(temp_frames_dir, frame_filename))
-            os.rmdir(temp_frames_dir)
-
-    # Handle special codec keywords
-    codec_map = {
-        'h264': ('mp4', ['-c:v', 'libx264']),
-        'h265': ('mp4', ['-c:v', 'libx265']),
-    }
-
-    ffmpeg_args = ['-y', '-i', input_path]
-
-    if target_format in codec_map:
-        output_ext, codec_flags = codec_map[target_format]
-        output_filename = f"{safe_name}.{output_ext}"
-        output_path = os.path.join(app.config['CONVERTED_FOLDER'], output_filename)
-        ffmpeg_args += codec_flags
-
-    ffmpeg_args.append(output_path)
-
-    # Run FFmpeg
+if _resolved_storage_dir is not None:
     try:
-        subprocess.run(['ffmpeg'] + ffmpeg_args, check=True)
-    except subprocess.CalledProcessError:
-        return {'error': 'ffmpeg failed to convert the file.'}, 500
+        _resolved_storage_dir.relative_to(BASE_DIR)
+        is_inside_project = True
+    except ValueError:
+        is_inside_project = False
+        
+    if is_inside_project:
+        _reloader_exclude = [str(_resolved_storage_dir / "*")]
+        if __name__ != "__main__" or os.environ.get("WERKZEUG_RUN_MAIN") == "true":
+            log.warning(
+                "config.json's storage_dir (%s) is INSIDE the project directory. "
+                "Consider moving it outside %s to prevent debug reloader issues.",
+                _resolved_storage_dir, BASE_DIR,
+            )
 
-    return {'download_url': f"/download/{output_filename}"}
+jobs.init(
+    _resolved_storage_dir, 
+    CONFIG,
+    quiet=(__name__ == "__main__" and os.environ.get("WERKZEUG_RUN_MAIN") != "true")
+)
 
-@app.route('/download/<filename>')
-def download_file(filename):
-    return send_from_directory(app.config['CONVERTED_FOLDER'], filename, as_attachment=True)
 
-@app.route('/cleanup', methods=['POST'])
-def cleanup_files():
-    cleared = []
-    for folder in [app.config['UPLOAD_FOLDER'], app.config['CONVERTED_FOLDER']]:
-        for filename in os.listdir(folder):
-            file_path = os.path.join(folder, filename)
-            try:
-                os.remove(file_path)
-                cleared.append(filename)
-            except Exception as e:
-                print(f"Error deleting {file_path}: {e}")
-    return jsonify({'status': 'cleaned', 'files_deleted': cleared})
+@app.route("/")
+def index():
+    return render_template("index.html")
 
-if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port, debug=True)
+
+@app.route("/api/formats")
+def api_formats():
+    """Returns the format matrix to sync frontend UI states with backend capabilities."""
+    return jsonify({
+        "groups": {kind.value: groups for kind, groups in TARGET_GROUPS.items()},
+        "targets": {kind.value: targets for kind, targets in TARGETS.items()},
+        "mode": APP_MODE,
+    })
+
+
+@app.route("/api/inspect", methods=["POST"])
+def api_inspect():
+    """Classifies files locally upon drag-and-drop before conversion starts."""
+    files = request.files.getlist("files")
+    if not files:
+        return jsonify({"error": "No files provided"}), 400
+
+    results = []
+    kinds_seen = set()
+    
+    for f in files:
+        kind = classify_content(f.filename, f.stream)
+        f.stream.seek(0)
+        if kind is None:
+            return jsonify({"error": f"Unsupported file type: {f.filename}"}), 400
+            
+        kinds_seen.add(kind)
+        f.seek(0, 2)
+        size = f.tell()
+        f.seek(0)
+        results.append({"name": f.filename, "kind": kind.value, "size": size})
+
+    if len(kinds_seen) > 1:
+        kind_names = ", ".join(sorted(k.value for k in kinds_seen))
+        return jsonify({
+            "error": f"Batch files must all be the same type (got: {kind_names}). Convert them separately."
+        }), 400
+
+    kind = next(iter(kinds_seen))
+    return jsonify({
+        "files": results,
+        "kind": kind.value,
+        "targets": targets_for(kind),
+        "groups": groups_for(kind),
+    })
+
+
+@app.route("/api/convert", methods=["POST"])
+def api_convert():
+    files = request.files.getlist("files")
+    target_format = request.form.get("target", "").strip().lower()
+    group = request.form.get("group", "").strip().lower() or None
+
+    if not files:
+        return jsonify({"error": "No files provided"}), 400
+    if not target_format:
+        return jsonify({"error": "No target format specified"}), 400
+    if len(files) > MAX_FILES_PER_JOB:
+        return jsonify({"error": f"Max {MAX_FILES_PER_JOB} files per batch"}), 400
+
+    kinds_seen = set()
+    for f in files:
+        kind = classify_content(f.filename, f.stream)
+        f.stream.seek(0)
+        if kind is None:
+            return jsonify({"error": f"Unsupported file type: {f.filename}"}), 400
+        kinds_seen.add(kind)
+
+    if len(kinds_seen) > 1:
+        return jsonify({"error": "Batch files must all be the same type"}), 400
+
+    kind = next(iter(kinds_seen))
+    kind_groups = TARGET_GROUPS.get(kind, {})
+
+    # Explicit 'group' is required when targets overlap across different subgroups.
+    if len(kind_groups) > 1:
+        if group is None or group not in kind_groups:
+            return jsonify({
+                "error": f"{kind.value} requires a 'group' — one of: {', '.join(kind_groups.keys())}"
+            }), 400
+        if target_format not in kind_groups[group]:
+            return jsonify({
+                "error": f"{kind.value}/{group} can't convert to .{target_format}. Valid: {', '.join(kind_groups[group])}"
+            }), 400
+    else:
+        group = next(iter(kind_groups), "default")
+        if target_format not in targets_for(kind):
+            return jsonify({
+                "error": f"{kind.value} can't convert to .{target_format}. Valid: {', '.join(targets_for(kind))}"
+            }), 400
+
+    # Optional preferences for animated conversions. Invalid values are safely ignored.
+    width = None
+    resolution_raw = request.form.get("resolution", "").strip().lower()
+    if resolution_raw:
+        digits = resolution_raw[:-1] if resolution_raw.endswith("p") else resolution_raw
+        if digits.isdigit() and 16 <= int(digits) <= 7680:
+            width = int(digits)
+
+    fps = None
+    fps_raw = request.form.get("fps", "").strip()
+    if fps_raw.isdigit() and 1 <= int(fps_raw) <= 120:
+        fps = int(fps_raw)
+
+    # Sanitized downstream against path traversal in jobs._expand_filename_template.
+    filename_template = request.form.get("filename_template", "{name}.{ext}").strip()[:200] or "{name}.{ext}"
+
+    job = jobs.create_job(
+        files, target_format, group, 
+        width=width, fps=fps, filename_template=filename_template
+    )
+    jobs.process_job(job.id)
+    return jsonify({"job_id": job.id})
+
+
+@app.route("/api/jobs")
+def api_jobs_list():
+    """Returns active jobs for the History UI. Excludes jobs purged by retention sweeps."""
+    return jsonify({"jobs": [j.to_dict() for j in jobs.list_jobs()]})
+
+
+@app.route("/api/jobs/<job_id>")
+def api_job_status(job_id: str):
+    job = jobs.get_job(job_id)
+    if job is None:
+        abort(404)
+    return jsonify(job.to_dict())
+
+
+@app.route("/api/jobs/<job_id>/cancel", methods=["POST"])
+def api_job_cancel(job_id: str):
+    """Cancels the active task and terminates anything queued behind it."""
+    result = jobs.cancel_job(job_id)
+    if not result["found"]:
+        abort(404)
+    return jsonify(result)
+
+
+@app.route("/api/jobs/<job_id>/download")
+def api_job_download(job_id: str):
+    job = jobs.get_job(job_id)
+    if job is None:
+        abort(404)
+        
+    succeeded = [t for t in job.tasks if t.status == "done"]
+    if not succeeded:
+        return jsonify({"error": "No successful conversions to download"}), 400
+
+    path, filename = jobs.build_download(job)
+    return send_file(path, as_attachment=True, download_name=filename)
+
+
+@app.route("/api/jobs/<job_id>/tasks/<task_id>/retry", methods=["POST"])
+def api_task_retry(job_id: str, task_id: str):
+    """Retries a failed or cancelled task using the retained input file on disk."""
+    original = jobs.get_job(job_id)
+    task = next((t for t in original.tasks if t.id == task_id), None) if original else None
+
+    if original is None or task is None:
+        abort(404)
+    if task.status not in ("failed", "cancelled"):
+        return jsonify({"error": "Only a failed or cancelled conversion can be retried."}), 400
+    if not task.input_path.exists():
+        return jsonify({
+            "error": f"Input expired after {CONFIG.get('failed_input_retention_days', 7)} "
+                     "days. Please re-upload the file."
+        }), 410
+
+    new_job = jobs.retry_task(job_id, task_id)
+    if new_job is None:
+        abort(404)
+        
+    jobs.process_job(new_job.id)
+    return jsonify({"job_id": new_job.id})
+
+
+if __name__ == "__main__":
+    run_kwargs = {"debug": True, "threaded": True, "port": 5000}
+    if _reloader_exclude:
+        run_kwargs["exclude_patterns"] = _reloader_exclude
+    app.run(**run_kwargs)

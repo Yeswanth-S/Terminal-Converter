@@ -1,35 +1,102 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Terminal Converter</title>
-  <link rel="icon" href="{{ url_for('static', filename='img/favicon.ico') }}" type="image/x-icon">
-  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
-  
+  <link rel="icon" id="favicon" type="image/svg+xml" href="">
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
 </head>
-<body>
+<body data-wall="a" data-look="frost">
 
-  <div class="terminal-container" id="terminal">
+  <div class="wallpaper"></div>
+  <div id="glyphLayer"></div>
+  <input type="file" id="fileInput" multiple hidden accept=".jpg,.jpeg,.png,.webp,.bmp,.tiff,.tif,.avif,.heic,.heif,.svg,.gif,.apng,.mp4,.mkv,.mov,.avi,.webm,.flv,.wmv,.mp3,.wav,.flac,.aac,.ogg,.opus,.wma">
 
-    <div class="header">
-      <button id="light-mode" title="Light Mode"></button>
-      <button id="dark-mode" title="Dark Mode"></button>
-      <button id="cancel" title="Cancel"></button>
+  <!-- Custom wallpaper modal. Kept outside .stage so it survives settings screen re-renders. -->
+  <div class="modal-overlay" id="wallModalOverlay" hidden>
+    <div class="modal">
+      <div class="modal-head">
+        <span>Upload custom wallpaper</span>
+        <span class="modal-close" id="wallModalCloseBtn">✕</span>
+      </div>
+      <div class="modal-body" id="wallModalBody"></div>
     </div>
+  </div>
+  <input type="file" id="wallFileInput" hidden accept="image/jpeg,image/png,image/webp">
 
-    <div class="svg-container">
-      <object id="svg-object" data="{{ url_for('static', filename='img/welcome.svg') }}" type="image/svg+xml" class="welcome-svg"></object>
+  <div class="bar">
+    <div class="bar-group">
+      <div class="bar-brand">
+        <span class="dot-glyph">
+          <svg class="ic-frost" xmlns="http://www.w3.org/2000/svg" viewBox="-2.6 0 100 100"><g fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="round" stroke-linejoin="round"><path d="M 9 32 H 39 M 24 32 V 68"/><path d="M 82 63 A 18 18 0 1 1 82 37"/><polygon points="76,43 90,45 86,31" fill="currentColor" stroke="none"/></g></svg>
+          <svg class="ic-tty" xmlns="http://www.w3.org/2000/svg" viewBox="-2.6 0 100 100"><g fill="none" stroke="currentColor" stroke-width="8.5" stroke-linecap="square" stroke-linejoin="miter"><path d="M 9 32 H 39 M 24 32 V 68"/><path d="M 82 63 A 18 18 0 1 1 82 37"/><polygon points="76,43 90,45 86,31" fill="currentColor" stroke="none"/></g></svg>
+        </span>
+        <b>terminal-converter</b>
+      </div>
+      <div class="workspaces">
+        <span class="ws active" data-ws="convert"><span class="n">1</span>convert</span>
+        <span class="ws" data-ws="history"><span class="n">2</span>history</span>
+        <span class="ws" data-ws="settings"><span class="n">3</span>settings</span>
+      </div>
     </div>
+    <div class="bar-group">
+      <div class="module" data-state="idle">
+        <span class="status-icons">
+          <span class="state-ic idle">
+            <span class="theme-icon">
+              <svg class="ic-frost" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7.5 6q-.625 0-1.062.438T6 7.5t.438 1.063T7.5 9t1.063-.437T9 7.5t-.437-1.062T7.5 6m0 10q-.625 0-1.062.438T6 17.5t.438 1.063T7.5 19t1.063-.437T9 17.5t-.437-1.062T7.5 16M4 3h16q.425 0 .713.288T21 4v7q0 .425-.288.713T20 12H4q-.425 0-.712-.288T3 11V4q0-.425.288-.712T4 3m0 10h16q.425 0 .713.288T21 14v7q0 .425-.288.713T20 22H4q-.425 0-.712-.288T3 21v-7q0-.425.288-.712T4 13"/></svg>
+              <svg class="ic-tty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M7.5 9q.625 0 1.063-.437T9 7.5t-.437-1.062T7.5 6t-1.062.438T6 7.5t.438 1.063T7.5 9m0 10q.625 0 1.063-.437T9 17.5t-.437-1.062T7.5 16t-1.062.438T6 17.5t.438 1.063T7.5 19M3 12V3h18v9zm0 10v-9h18v9z"/></svg>
+            </span>
+            <span id="statusText">idle</span>
+          </span>
+          <span class="state-ic uploading">
+            <span class="theme-icon">
+              <svg class="ic-frost" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M11 19h2v-4.175l1.6 1.6L16 15l-4-4l-4 4l1.425 1.4L11 14.825zm-5 3q-.825 0-1.412-.587T4 20V4q0-.825.588-1.412T6 2h8l6 6v12q0 .825-.587 1.413T18 22zm7-13V4H6v16h12V9zM6 4v5zv16z"/></svg>
+              <svg class="ic-tty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M11 19h2v-4.175l1.6 1.6L16 15l-4-4l-4 4l1.425 1.4L11 14.825zm-7 3V2h10l6 6v14zm9-13V4H6v16h12V9zM6 4v5zv16z"/></svg>
+            </span>
+            <span>uploading…</span>
+          </span>
+          <span class="state-ic converting">
+            <span class="theme-icon">
+              <svg class="spin-anim" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" d="M17.65 6.35A7.96 7.96 0 0 0 12 4a8 8 0 0 0-8 8a8 8 0 0 0 8 8c3.73 0 6.84-2.55 7.73-6h-2.08A5.99 5.99 0 0 1 12 18a6 6 0 0 1-6-6a6 6 0 0 1 6-6c1.66 0 3.14.69 4.22 1.78L13 11h7V4z"/></svg>
+            </span>
+            <span>converting…</span>
+          </span>
+          <span class="state-ic done">
+            <span class="theme-icon">
+              <svg class="ic-frost" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="none" stroke="currentColor" stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 3v5.5a.5.5 0 0 0 .5.5H19m-9.298 6.132l1.414 1.414l3.182-3.182M13.586 3H6a1 1 0 0 0-1 1v16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1V8.414a1 1 0 0 0-.293-.707l-4.414-4.414A1 1 0 0 0 13.586 3"/></svg>
+              <svg class="ic-tty" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path fill="currentColor" fill-rule="evenodd" d="M4 2h9.56L20 8.44V22H4zm13.44 6L14 4.56V8zM5.5 3.5v17h13v-11h-4.75c-.69 0-1.25-.56-1.25-1.25V3.5zm3.78 10.72l1.47 1.47l3.97-3.97l1.06 1.06l-4.145 4.145a1.25 1.25 0 0 1-.885.365c-.32 0-.64-.12-.885-.365L8.22 15.28z" clip-rule="evenodd"/></svg>
+            </span>
+            <span>done</span>
+          </span>
+        </span>
+      </div>
+      <div class="module clock" id="clock">00:00</div>
+      <div class="ctrl">
+        <button id="btnFrost" class="active">frost</button>
+        <button id="btnTty">tty</button>
+        <button id="btnLookSwap" title="swap frost/tty">frost</button>
+        <span class="sep"></span>
+        <button id="btnReset" title="reset">↺</button>
+      </div>
+    </div>
+  </div>
 
-    <div id="output"></div> 
-
-    <input 
-      type="file" 
-      id="file-input" 
-      accept=".png,.jpg,.jpeg,.webp,.svg,.bmp,.tiff,.gif,.mp4,.mkv,.mov,.avi,.flv,.wmv,.webm,.mp3,.wav,.flac,.aac,.m4a,.ogg,.opus,.wma"  
-      style="display: none" 
-    />
+  <div class="stage">
+    <div class="term">
+      <div class="rotate-hint" id="rotateHint">
+        <span>tip: this looks better in landscape</span>
+        <span class="rotate-hint-close" id="rotateHintClose">✕</span>
+      </div>
+      <div class="term-head">
+        <span class="tag">~/terminal-converter <span class="dim">(session)</span></span>
+        <span class="live"><span class="led"></span>listening on :5000</span>
+      </div>
+      <div class="screen" id="screen"></div>
+      <div class="screen" id="settingsScreen" style="display:none;"></div>
+      <div class="screen" id="historyScreen" style="display:none;"></div>
+    </div>
   </div>
 
   <script src="{{ url_for('static', filename='js/script.js') }}"></script>
