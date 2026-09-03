@@ -1,38 +1,30 @@
-# Byte-compiled / optimized / DLL files
+# Python
 __pycache__/
 *.py[cod]
-*$py.class
-
-# Flask / Python
-instance/
-.env
-*.env
-
-# OS-specific
-.DS_Store
-Thumbs.db
+*.egg-info/
+.Python
+build/
+dist/
 
 # Virtual environments
 venv/
-env/
-ENV/
 .venv/
+env/
 
-# IDEs and editors
+# Generated at runtime
+config.json
+*.db
+*.sqlite3
+storage/
+*.log
+
+# Env vars / secrets
+.env
+
+# Editors
 .vscode/
 .idea/
 
-# Python test cache
-.pytest_cache/
-
-# Uploads and converted files
-uploads/
-converted/
-
-# Logs
-*.log
-
-# Render / Deployment
-*.sqlite3
-*.bak
-*.swp
+# OS
+.DS_Store
+Thumbs.db
