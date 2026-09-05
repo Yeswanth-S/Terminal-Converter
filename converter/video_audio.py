@@ -69,8 +69,8 @@ def _append_log(cmd: list[str], returncode: int | None, stderr: str | None,
 
 _CONTAINER_ARGS = {
     "mp4": ["-c:v", "libx264", "-c:a", "aac", "-movflags", "+faststart"],
-    "mkv": [],
-    "mov": [],
+    "mkv": ["-c:v", "copy", "-c:a", "copy"],
+    "mov": ["-c:v", "copy", "-c:a", "copy"],
     "avi": ["-c:v", "libx264", "-crf", "26", "-pix_fmt", "yuv420p",
             "-c:a", "libmp3lame", "-q:a", "3"],
     "webm": ["-c:v", "libvpx-vp9", "-row-mt", "1", "-crf", "30", "-b:v", "0",
